@@ -1,0 +1,47 @@
+name: Build APK
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare source (use app folder, or unzip the zip in the repo)
+        run: |
+          set -e
+          echo "Files in repo root:"; ls -la
+          if [ -f app/build.gradle.kts ]; then
+            echo "SRC=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          else
+            Z=ScreenTranslatorAndroid.zip
+            [ -f "$Z" ] || Z=$(ls *.zip 2>/dev/null | head -1)
+            [ -n "$Z" ] || { echo "::error::No app folder and no .zip found in repo root"; exit 1; }
+            echo "Using $Z"
+            mkdir -p /tmp/src
+            unzip -q "$Z" -d /tmp/src
+            S=$(find /tmp/src -name settings.gradle.kts | head -1)
+            [ -n "$S" ] || { echo "::error::settings.gradle.kts not found inside $Z"; exit 1; }
+            D=$(dirname "$S")
+            [ -f "$D/app/build.gradle.kts" ] || { echo "::error::app/build.gradle.kts not found inside $Z"; exit 1; }
+            echo "SRC=$D" >> "$GITHUB_ENV"
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Build
+        run: cd "$SRC" && gradle assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ScreenTranslator-APK
+          path: ${{ env.SRC }}/app/build/outputs/apk/debug/app-debug.apk
