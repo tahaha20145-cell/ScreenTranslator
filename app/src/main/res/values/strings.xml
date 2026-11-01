@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Screen Translator</string>
+    <string name="title">แปลข้อความบนจอเป็นภาษาไทย</string>
+    <string name="source_language">ภาษาต้นฉบับ</string>
+    <string name="mode">โหมดการแปล</string>
+    <string name="mode_continuous">ต่อเนื่อง (แปลซับไตเติลอัตโนมัติ)</string>
+    <string name="mode_once">ทีละครั้ง (แตะปุ่มเพื่อแปลทั้งจอ)</string>
+    <string name="start">เริ่มใช้งาน</string>
+    <string name="help">• โหมดต่อเนื่อง: แตะปุ่มลอยหนึ่งครั้ง ปุ่มจะเป็นสีเขียวและแปลให้อัตโนมัติ แตะอีกครั้งเพื่อหยุด\n• โหมดทีละครั้ง: แตะปุ่มลอยเพื่อแปลทั้งจอ แตะตรงไหนก็ได้เพื่อปิดคำแปล\n• ลากปุ่มลอยเพื่อย้ายตำแหน่ง\n• กดปุ่มลอยค้าง 1 วินาทีเพื่อปิดโปรแกรม\n\nครั้งแรกต้องต่ออินเทอร์เน็ตเพื่อโหลดโมเดลภาษา (ประมาณ 30 MB ต่อภาษา)</string>
+
+    <string name="need_overlay">กรุณาอนุญาต \"แสดงทับแอปอื่น\" ให้ Screen Translator</string>
+    <string name="need_capture">ต้องอนุญาตการบันทึกหน้าจอจึงจะแปลได้</string>
+
+    <string name="button_label">แปล</string>
+    <string name="notification_channel">ปุ่มแปลภาษา</string>
+    <string name="notification_text">กำลังทำงาน แตะปุ่มลอยเพื่อแปล</string>
+    <string name="stop">ปิด</string>
+    <string name="closed">ปิด Screen Translator แล้ว</string>
+    <string name="already_running">Screen Translator ทำงานอยู่แล้ว</string>
+    <string name="model_downloading">กำลังเตรียมโมเดลภาษา…</string>
+    <string name="model_ready">พร้อมแปลแล้ว</string>
+    <string name="model_failed">โหลดโมเดลภาษาไม่สำเร็จ กรุณาต่ออินเทอร์เน็ตแล้วลองใหม่</string>
+    <string name="no_text">ไม่พบข้อความบนจอ</string>
+</resources>
