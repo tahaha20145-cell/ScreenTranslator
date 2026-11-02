@@ -8,12 +8,22 @@ import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
-/** ภาษาต้นฉบับที่รองรับ (แปลเป็นภาษาไทยเสมอ) */
-enum class SourceLanguage(val label: String, val translateCode: String) {
-    ENGLISH("อังกฤษ (English)", TranslateLanguage.ENGLISH),
-    JAPANESE("ญี่ปุ่น (日本語)", TranslateLanguage.JAPANESE),
-    CHINESE("จีน (中文)", TranslateLanguage.CHINESE),
-    KOREAN("เกาหลี (한국어)", TranslateLanguage.KOREAN);
+/**
+ * ภาษาต้นฉบับที่รองรับ (แปลเป็นภาษาไทยเสมอ)
+ * [spaced] = ภาษานี้เว้นวรรคระหว่างคำไหม ใช้ตอนต่อบรรทัดที่ OCR ตัดออกจากกัน
+ */
+enum class SourceLanguage(
+    val label: String,
+    val englishName: String,
+    val translateCode: String,
+    val spaced: Boolean,
+) {
+    ENGLISH("อังกฤษ (English)", "English", TranslateLanguage.ENGLISH, true),
+    JAPANESE("ญี่ปุ่น (日本語)", "Japanese", TranslateLanguage.JAPANESE, false),
+    CHINESE("จีน (中文)", "Chinese", TranslateLanguage.CHINESE, false),
+    KOREAN("เกาหลี (한국어)", "Korean", TranslateLanguage.KOREAN, true);
+
+    val joiner get() = if (spaced) " " else ""
 
     fun createRecognizer(): TextRecognizer = when (this) {
         ENGLISH -> TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)

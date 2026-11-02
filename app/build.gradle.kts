@@ -29,6 +29,19 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    packaging {
+        resources {
+            // ไฟล์ license ซ้ำกันจากไลบรารีของ Anthropic SDK (Jackson, OkHttp)
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+                "META-INF/INDEX.LIST",
+                "META-INF/versions/**",
+            )
+        }
+    }
 }
 
 dependencies {
@@ -41,6 +54,9 @@ dependencies {
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
     implementation("com.google.mlkit:text-recognition-korean:16.0.1")
 
-    // แปลภาษาออฟไลน์ (ดาวน์โหลดโมเดลครั้งแรก ~30 MB ต่อภาษา)
+    // ตัวแปลฟรี ออฟไลน์ (ดาวน์โหลดโมเดลครั้งแรก ~30 MB ต่อภาษา) และใช้เป็นตัวสำรองของ Claude
     implementation("com.google.mlkit:translate:17.0.3")
+
+    // ตัวแปล Claude
+    implementation("com.anthropic:anthropic-java:2.34.0")
 }

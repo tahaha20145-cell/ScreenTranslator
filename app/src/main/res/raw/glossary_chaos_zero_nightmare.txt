@@ -1,0 +1,96 @@
+# Chaos Zero Nightmare (English)
+# แก้คำแปลได้ตามชอบ บรรทัดที่ขึ้นต้นด้วย # จะไม่ถูกใช้
+
+# ตัวละคร (Combatants)
+Luke = ลุค
+Khalipe = คาลิเป
+Magna = แม็กน่า
+Orlea = ออร์เลีย
+Veronica = เวโรนิกา
+Hugo = ฮิวโก้
+Haru = ฮารุ
+Kayron = เคย์รอน
+Nia = เนีย
+Selena = เซเลน่า
+Tressa = เทรสซ่า
+Lucas = ลูคัส
+Maribell = มาริเบล
+Mika = มิกะ
+Beryl = เบริล
+Cassius = แคสเซียส
+Owen = โอเว่น
+Rei = เรย์
+Yuki = ยูกิ
+Chizuru = ชิซุรุ
+Mei Lin = เหม่ยหลิน
+Rin = ริน
+Renoa = เรโนอา
+Amir = อาเมียร์
+Diana = ไดอาน่า
+Hilde = ฮิลเดอ
+Sereniel = เซเรเนียล
+Tenebria = เทเนเบรีย
+Narja = นาร์จา
+Heidemarie = ไฮเดอมารี
+Tiphera = ทิเฟร่า
+Adelheid = อเดลไฮด์
+Anika = อนิกา
+Sylvia = ซิลเวีย
+
+# ตัวละครในเนื้อเรื่อง
+Elaine = เอเลน
+Rosie = โรซี่
+Louis = หลุยส์
+Maria = มาเรีย
+Chief Inspector = หัวหน้าผู้ตรวจการ
+
+# คลาส
+Hunter = ฮันเตอร์
+Vanguard = แวนการ์ด
+Ranger = เรนเจอร์
+Striker = สไตรเกอร์
+Psionic = ไซออนิก
+Controller = คอนโทรลเลอร์
+
+# สถานที่และโหมด
+Ark City = อาร์คซิตี้
+Epinoe Center = ศูนย์เอพิโนเอ
+Chaos Manifestation = เคออสแมนิเฟสเทชัน
+Memory Encroachment = การรุกล้ำความทรงจำ
+Galactic Disaster = กาแลกติกดิซาสเตอร์
+Basin of Hyperspace = แอ่งไฮเปอร์สเปซ
+Spiral Tower Of Screams = หอคอยเกลียวแห่งเสียงกรีดร้อง
+The Great Rift = รอยแยกใหญ่
+Nebula Distortion = เนบิวลาบิดเบือน
+Twin Star's Shadow = เงาดาวคู่
+City of Mist = นครหมอก
+Swamp of Judgement = บึงแห่งการพิพากษา
+The Foretold Ruin = ซากปรักหักพังตามคำทำนาย
+Zero System = ซีโร่ซิสเต็ม
+Trauma Code = ทรอมาโค้ด
+Dellang Shop = ร้านเดลลัง
+Elite Area = พื้นที่อีลีท
+Event Area = พื้นที่อีเวนต์
+Unidentified Area = พื้นที่ไม่ทราบชนิด
+Safe Zone = เขตปลอดภัย
+
+# ระบบ ไอเทม และสกุลเงิน
+Save Data = เซฟดาต้า
+Epiphany = เอพิฟานี
+Manifest Ego = แมนิเฟสต์อีโก้
+Ego Skill = สกิลอีโก้
+Battle Memory = แบทเทิลเมมโมรี่
+Memory Fragment = ชิ้นส่วนความทรงจำ
+Memory Code = เมมโมรี่โค้ด
+Striker Manual = คู่มือสไตรเกอร์
+Prism Module = ปริซึมโมดูล
+Spectral Cube = สเปกตรัลคิวบ์
+Unigram = ยูนิแกรม
+Aether = อีเธอร์
+Omega Code = โอเมก้าโค้ด
+Captain Grade = ระดับกัปตัน
+Arkhianon Supply = อาร์เคียนอนซัพพลาย
+Faint Memory Points = แต้มความทรงจำเลือนราง
+Deep Trauma = บาดแผลใจรุนแรง
+Stat Proficiency = ความชำนาญค่าสถานะ
+Weakness Attribute = ธาตุจุดอ่อน

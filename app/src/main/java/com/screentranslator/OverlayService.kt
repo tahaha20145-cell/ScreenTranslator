@@ -48,7 +48,10 @@ import com.google.mlkit.nl.translate.TranslatorOptions
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognizer
+import java.util.concurrent.Executors
 import kotlin.math.hypot
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * ปุ่มลอย + จับภาพหน้าจอ + OCR + แปลภาษา + วางคำแปลทับตำแหน่งข้อความเดิม
@@ -70,6 +73,12 @@ class OverlayService : Service() {
         private const val MAX_CAPTURE_WAIT_MS = 500L
         private const val LONG_PRESS_MS = 1000L
         private const val MAX_CACHE = 500
+        private const val ERROR_TOAST_INTERVAL_MS = 10_000L
+
+        // ต่อบรรทัดที่ OCR ตัดออกจากกัน เฉพาะบรรทัดที่ยาวพอจะเป็นประโยค (ไม่ใช่เมนูที่วางเรียงกัน)
+        private const val MIN_MERGE_CHARS_SPACED = 12
+        private const val MIN_MERGE_CHARS_CJK = 6
+        private const val SENTENCE_END = ".!?。！？…"
 
         private const val COLOR_IDLE = 0xFF1E88E5.toInt()
         private const val COLOR_RUNNING = 0xFF43A047.toInt()
@@ -97,11 +106,16 @@ class OverlayService : Service() {
     @Volatile private var frameCount = 0L
 
     // OCR + แปล
+    private lateinit var language: SourceLanguage
+    private var glossary = Glossary.parse(null)
     private var recognizer: TextRecognizer? = null
-    private var translator: Translator? = null
-    private var modelReady = false
+    private var claude: ClaudeTranslator? = null
+    private var mlKit: Translator? = null
+    private var mlKitReady = false
+    private val network = Executors.newSingleThreadExecutor()
     private val cache = HashMap<String, String>()
     private var lastText = ""
+    private var lastErrorToast = 0L
 
     // หน้าต่างลอย
     private lateinit var button: TextView
@@ -149,14 +163,26 @@ class OverlayService : Service() {
         }
         val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
         val languages = SourceLanguage.values()
-        val language = languages[intent.getIntExtra(EXTRA_LANGUAGE, 0).coerceIn(languages.indices)]
+        language = languages[intent.getIntExtra(EXTRA_LANGUAGE, 0).coerceIn(languages.indices)]
         continuous = intent.getBooleanExtra(EXTRA_CONTINUOUS, true)
 
+        val prefs = Prefs.get(this)
+        val useClaude = prefs.getBoolean(Prefs.USE_CLAUDE, false)
+        val apiKey = prefs.getString(Prefs.API_KEY, null)
+        if (useClaude && apiKey.isNullOrBlank()) {
+            toast(R.string.need_api_key)
+            stopSelf()
+            return START_NOT_STICKY
+        }
         if (!startProjection(resultCode, data)) {
             stopSelf()
             return START_NOT_STICKY
         }
-        setUpModels(language)
+        glossary = Glossary.parse(prefs.getString(Prefs.GLOSSARY, null))
+        recognizer = language.createRecognizer()
+        if (useClaude && apiKey != null) claude = ClaudeTranslator(apiKey, language, glossary)
+        // โหมด Claude ก็เตรียม ML Kit ไว้ด้วย เป็นตัวสำรองตอนไม่มีเน็ตหรือเครดิตหมด
+        setUpMlKit(showProgress = !useClaude)
         windowManager.addView(resultLayer, resultParams)
         windowManager.addView(button, buttonParams)
         updateButtonColor()
@@ -179,7 +205,9 @@ class OverlayService : Service() {
         imageReader?.close()
         imageThread.quitSafely()
         recognizer?.close()
-        translator?.close()
+        network.shutdownNow()
+        claude?.close()
+        mlKit?.close()
         super.onDestroy()
     }
 
@@ -270,6 +298,28 @@ class OverlayService : Service() {
         return true
     }
 
+    private fun setUpMlKit(showProgress: Boolean) {
+        val options = TranslatorOptions.Builder()
+            .setSourceLanguage(language.translateCode)
+            .setTargetLanguage(TranslateLanguage.THAI)
+            .build()
+        val tr = Translation.getClient(options)
+        mlKit = tr
+        if (showProgress) toast(R.string.model_downloading)
+        tr.downloadModelIfNeeded(DownloadConditions.Builder().build())
+            .addOnSuccessListener {
+                if (destroyed) return@addOnSuccessListener
+                mlKitReady = true
+                if (showProgress) toast(R.string.model_ready)
+            }
+            .addOnFailureListener {
+                if (destroyed || !showProgress) return@addOnFailureListener
+                // โหมดฟรีใช้ต่อไม่ได้ถ้าไม่มีโมเดล
+                toast(R.string.model_failed)
+                stopSelf()
+            }
+    }
+
     private fun createImageReader(): ImageReader {
         val reader = ImageReader.newInstance(screenWidth, screenHeight, PixelFormat.RGBA_8888, 3)
         reader.setOnImageAvailableListener({ r ->
@@ -285,28 +335,6 @@ class OverlayService : Service() {
             }
         }, Handler(imageThread.looper))
         return reader
-    }
-
-    private fun setUpModels(language: SourceLanguage) {
-        recognizer = language.createRecognizer()
-        val options = TranslatorOptions.Builder()
-            .setSourceLanguage(language.translateCode)
-            .setTargetLanguage(TranslateLanguage.THAI)
-            .build()
-        val tr = Translation.getClient(options)
-        translator = tr
-        toast(R.string.model_downloading)
-        tr.downloadModelIfNeeded(DownloadConditions.Builder().build())
-            .addOnSuccessListener {
-                if (destroyed) return@addOnSuccessListener
-                modelReady = true
-                toast(R.string.model_ready)
-            }
-            .addOnFailureListener {
-                if (destroyed) return@addOnFailureListener
-                toast(R.string.model_failed)
-                stopSelf()
-            }
     }
 
     // ---------- หน้าต่างลอย ----------
@@ -406,7 +434,7 @@ class OverlayService : Service() {
 
     private fun onButtonTap() {
         if (destroyed) return
-        if (!modelReady) {
+        if (claude == null && !mlKitReady) {
             toast(R.string.model_downloading)
             return
         }
@@ -508,12 +536,13 @@ class OverlayService : Service() {
         button.getLocationOnScreen(loc)
         val buttonRect = Rect(loc[0], loc[1], loc[0] + button.width, loc[1] + button.height)
 
-        val blocks = text.textBlocks.mapNotNull { block ->
+        val ocrBlocks = text.textBlocks.mapNotNull { block ->
             val box = block.boundingBox ?: return@mapNotNull null
-            val source = block.text.replace('\n', ' ').trim()
+            val source = block.lines.joinToString(language.joiner) { it.text.trim() }.trim()
             if (source.length < 2 || Rect.intersects(box, buttonRect)) null
             else Block(box, source, block.lines.size)
         }
+        val blocks = mergeSplitSentences(ocrBlocks)
 
         // โหมดต่อเนื่อง: ข้อความบนจอเหมือนเดิม ไม่ต้องแปลใหม่
         val key = blocks.joinToString("\n") { it.source }
@@ -523,29 +552,116 @@ class OverlayService : Service() {
         }
         lastText = key
 
-        val tr = translator
-        if (blocks.isEmpty() || tr == null) {
+        if (blocks.isEmpty()) {
             if (!continuous) toast(R.string.no_text)
             finishPass(emptyList())
             return
         }
         if (cache.size > MAX_CACHE) cache.clear()
 
-        var remaining = blocks.size
-        val onDone: () -> Unit = { if (--remaining == 0) finishPass(blocks) }
-        for (block in blocks) {
-            val cached = cache[block.source]
-            if (cached != null) {
-                block.translated = cached
-                onDone()
+        // แปลเฉพาะข้อความที่ยังไม่เคยแปล
+        blocks.forEach { it.translated = cache[it.source] }
+        val missing = blocks.filter { it.translated == null }
+        when {
+            missing.isEmpty() -> finishPass(blocks)
+            claude != null -> translateWithClaude(missing) { finishPass(blocks) }
+            else -> translateWithMlKit(missing) { finishPass(blocks) }
+        }
+    }
+
+    /**
+     * ซับไตเติลสองบรรทัดที่ OCR แยกเป็นคนละกล่อง ให้รวมเป็นประโยคเดียวก่อนแปล
+     * รวมเมื่อ: อยู่ติดกันในแนวตั้ง, ซ้อนกันในแนวนอนเกินครึ่ง, บรรทัดบนยาวพอและยังไม่จบประโยค
+     */
+    private fun mergeSplitSentences(blocks: List<Block>): List<Block> {
+        val minChars = if (language.spaced) MIN_MERGE_CHARS_SPACED else MIN_MERGE_CHARS_CJK
+        val merged = ArrayList<Block>()
+        for (block in blocks.sortedBy { it.box.top }) {
+            val prev = merged.lastOrNull()
+            if (prev != null && prev.source.length >= minChars &&
+                prev.source.last() !in SENTENCE_END && isNextLine(prev, block)
+            ) {
+                merged[merged.lastIndex] = Block(
+                    Rect(prev.box).apply { union(block.box) },
+                    prev.source + language.joiner + block.source,
+                    prev.lines + block.lines,
+                )
             } else {
-                tr.translate(block.source)
-                    .addOnSuccessListener {
-                        block.translated = it
-                        cache[block.source] = it
-                    }
-                    .addOnCompleteListener { onDone() }
+                merged.add(block)
             }
+        }
+        return merged
+    }
+
+    private fun isNextLine(upper: Block, lower: Block): Boolean {
+        val lineHeight = upper.box.height().toFloat() / upper.lines.coerceAtLeast(1)
+        val gap = lower.box.top - upper.box.bottom
+        if (gap > lineHeight * 0.8f || gap < -lineHeight * 0.5f) return false
+        val overlap = min(upper.box.right, lower.box.right) - max(upper.box.left, lower.box.left)
+        return overlap > 0.5f * min(upper.box.width(), lower.box.width())
+    }
+
+    private fun translateWithClaude(missing: List<Block>, done: () -> Unit) {
+        val tr = claude ?: return translateWithMlKit(missing, done)
+        network.execute {
+            var invalidKey = false
+            val result = try {
+                tr.translate(missing.map { it.source })
+            } catch (e: ClaudeTranslator.InvalidKeyException) {
+                invalidKey = true
+                null
+            } catch (e: Exception) {
+                null
+            }
+            main.post {
+                if (destroyed) return@post
+                if (invalidKey) {
+                    // key ผิด ใช้ ML Kit แทนจนกว่าจะปิดแอป
+                    toast(R.string.invalid_api_key)
+                    claude = null
+                    tr.close()
+                    translateWithMlKit(missing, done)
+                } else if (result == null) {
+                    throttledToast(if (mlKitReady) R.string.claude_failed_fallback else R.string.translate_failed)
+                    translateWithMlKit(missing, done)
+                } else {
+                    missing.forEachIndexed { i, block ->
+                        block.translated = result[i]
+                        cache[block.source] = result[i]
+                    }
+                    done()
+                }
+            }
+        }
+    }
+
+    private fun translateWithMlKit(missing: List<Block>, done: () -> Unit) {
+        val tr = mlKit
+        if (tr == null || !mlKitReady) {
+            lastText = "" // ให้ลองใหม่รอบหน้า
+            done()
+            return
+        }
+        var remaining = missing.size
+        for (block in missing) {
+            val (prepared, tokens) = glossary.protect(block.source)
+            tr.translate(prepared)
+                .addOnSuccessListener {
+                    val result = glossary.restore(it, tokens)
+                    block.translated = result
+                    cache[block.source] = result
+                }
+                .addOnCompleteListener {
+                    if (--remaining == 0 && !destroyed) done()
+                }
+        }
+    }
+
+    private fun throttledToast(resId: Int) {
+        val now = SystemClock.uptimeMillis()
+        if (now - lastErrorToast > ERROR_TOAST_INTERVAL_MS) {
+            lastErrorToast = now
+            toast(resId)
         }
     }
 

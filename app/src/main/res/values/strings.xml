@@ -7,7 +7,18 @@
     <string name="mode_continuous">ต่อเนื่อง (แปลซับไตเติลอัตโนมัติ)</string>
     <string name="mode_once">ทีละครั้ง (แตะปุ่มเพื่อแปลทั้งจอ)</string>
     <string name="start">เริ่มใช้งาน</string>
-    <string name="help">• โหมดต่อเนื่อง: แตะปุ่มลอยหนึ่งครั้ง ปุ่มจะเป็นสีเขียวและแปลให้อัตโนมัติ แตะอีกครั้งเพื่อหยุด\n• โหมดทีละครั้ง: แตะปุ่มลอยเพื่อแปลทั้งจอ แตะตรงไหนก็ได้เพื่อปิดคำแปล\n• ลากปุ่มลอยเพื่อย้ายตำแหน่ง\n• กดปุ่มลอยค้าง 1 วินาทีเพื่อปิดโปรแกรม\n\nครั้งแรกต้องต่ออินเทอร์เน็ตเพื่อโหลดโมเดลภาษา (ประมาณ 30 MB ต่อภาษา)</string>
+    <string name="help">• โหมดต่อเนื่อง: แตะปุ่มลอยหนึ่งครั้ง ปุ่มจะเป็นสีเขียวและแปลให้อัตโนมัติ แตะอีกครั้งเพื่อหยุด\n• โหมดทีละครั้ง: แตะปุ่มลอยเพื่อแปลทั้งจอ แตะตรงไหนก็ได้เพื่อปิดคำแปล\n• ลากปุ่มลอยเพื่อย้ายตำแหน่ง\n• กดปุ่มลอยค้าง 1 วินาทีเพื่อปิดโปรแกรม\n\nแบบฟรี: ครั้งแรกต้องต่ออินเทอร์เน็ตเพื่อโหลดโมเดลภาษา (ประมาณ 30 MB ต่อภาษา) หลังจากนั้นใช้ออฟไลน์ได้\nแบบ Claude: ต้องต่ออินเทอร์เน็ต และมีค่า API ตามจำนวนข้อความที่แปล</string>
+    <string name="engine">ตัวแปล</string>
+    <string name="engine_free">ฟรี (ML Kit, ออฟไลน์)</string>
+    <string name="engine_claude">Claude (แปลดีกว่า มีค่า API)</string>
+    <string name="glossary">อภิธานศัพท์ (ไม่บังคับ)</string>
+    <string name="load_czn">ใส่คำศัพท์ Chaos Zero Nightmare</string>
+    <string name="czn_loaded">เพิ่มคำศัพท์ Chaos Zero Nightmare แล้ว แก้ไขได้ตามต้องการ</string>
+    <string name="czn_already_loaded">มีคำศัพท์ Chaos Zero Nightmare อยู่แล้ว</string>
+    <string name="glossary_hint">บรรทัดละคำ เช่น\nHikari = ฮิคาริ\nPotion = ยาฟื้นพลัง</string>
+    <string name="api_key">Claude API key</string>
+    <string name="api_key_hint">sk-ant-…</string>
+    <string name="privacy_note">ข้อความที่อ่านได้จากจอจะถูกส่งไปแปลที่ Anthropic (ส่งเฉพาะข้อความ ไม่ส่งภาพหน้าจอ) API key เก็บไว้ในเครื่องนี้เท่านั้น</string>
 
     <string name="need_overlay">กรุณาอนุญาต \"แสดงทับแอปอื่น\" ให้ Screen Translator</string>
     <string name="need_capture">ต้องอนุญาตการบันทึกหน้าจอจึงจะแปลได้</string>
@@ -18,6 +29,10 @@
     <string name="stop">ปิด</string>
     <string name="closed">ปิด Screen Translator แล้ว</string>
     <string name="already_running">Screen Translator ทำงานอยู่แล้ว</string>
+    <string name="need_api_key">กรุณาใส่ Claude API key</string>
+    <string name="invalid_api_key">API key ไม่ถูกต้อง กรุณาตรวจสอบแล้วเริ่มใหม่</string>
+    <string name="translate_failed">แปลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต</string>
+    <string name="claude_failed_fallback">แปลด้วย Claude ไม่สำเร็จ ใช้ตัวแปลฟรีแทนชั่วคราว</string>
     <string name="model_downloading">กำลังเตรียมโมเดลภาษา…</string>
     <string name="model_ready">พร้อมแปลแล้ว</string>
     <string name="model_failed">โหลดโมเดลภาษาไม่สำเร็จ กรุณาต่ออินเทอร์เน็ตแล้วลองใหม่</string>

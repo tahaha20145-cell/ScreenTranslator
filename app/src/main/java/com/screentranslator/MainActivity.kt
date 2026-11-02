@@ -8,8 +8,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
 import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.Toast
@@ -21,6 +23,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var languageSpinner: Spinner
     private lateinit var modeGroup: RadioGroup
+    private lateinit var engineGroup: RadioGroup
+    private lateinit var apiKeySection: View
+    private lateinit var apiKeyInput: EditText
+    private lateinit var glossaryInput: EditText
 
     // ขอสิทธิ์ตามลำดับ: แจ้งเตือน -> แสดงทับแอปอื่น -> บันทึกหน้าจอ
     private val notificationPermission =
@@ -54,26 +60,66 @@ class MainActivity : AppCompatActivity() {
 
         languageSpinner = findViewById(R.id.language)
         modeGroup = findViewById(R.id.mode)
+        engineGroup = findViewById(R.id.engine)
+        apiKeySection = findViewById(R.id.api_key_section)
+        apiKeyInput = findViewById(R.id.api_key)
+        glossaryInput = findViewById(R.id.glossary)
         languageSpinner.adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_dropdown_item,
             SourceLanguage.values().map { it.label },
         )
 
-        val prefs = getPreferences(MODE_PRIVATE)
-        languageSpinner.setSelection(prefs.getInt(PREF_LANGUAGE, 0))
-        modeGroup.check(if (prefs.getBoolean(PREF_CONTINUOUS, true)) R.id.mode_continuous else R.id.mode_once)
+        val prefs = Prefs.get(this)
+        languageSpinner.setSelection(prefs.getInt(Prefs.LANGUAGE, 0))
+        modeGroup.check(if (prefs.getBoolean(Prefs.CONTINUOUS, true)) R.id.mode_continuous else R.id.mode_once)
+        engineGroup.check(if (prefs.getBoolean(Prefs.USE_CLAUDE, false)) R.id.engine_claude else R.id.engine_free)
+        apiKeyInput.setText(prefs.getString(Prefs.API_KEY, ""))
+        glossaryInput.setText(prefs.getString(Prefs.GLOSSARY, ""))
+
+        findViewById<Button>(R.id.load_czn).setOnClickListener { loadGamePreset(R.raw.glossary_chaos_zero_nightmare) }
+
+        // ช่อง API key แสดงเฉพาะตอนเลือก Claude
+        updateApiKeyVisibility()
+        engineGroup.setOnCheckedChangeListener { _, _ -> updateApiKeyVisibility() }
 
         findViewById<Button>(R.id.start).setOnClickListener {
+            val apiKey = apiKeyInput.text.toString().trim()
+            if (useClaude() && apiKey.isEmpty()) {
+                toast(R.string.need_api_key)
+                return@setOnClickListener
+            }
             prefs.edit()
-                .putInt(PREF_LANGUAGE, languageSpinner.selectedItemPosition)
-                .putBoolean(PREF_CONTINUOUS, isContinuous())
+                .putInt(Prefs.LANGUAGE, languageSpinner.selectedItemPosition)
+                .putBoolean(Prefs.CONTINUOUS, isContinuous())
+                .putBoolean(Prefs.USE_CLAUDE, useClaude())
+                .putString(Prefs.API_KEY, apiKey)
+                .putString(Prefs.GLOSSARY, glossaryInput.text.toString())
                 .apply()
             start()
         }
     }
 
     private fun isContinuous() = modeGroup.checkedRadioButtonId == R.id.mode_continuous
+
+    private fun useClaude() = engineGroup.checkedRadioButtonId == R.id.engine_claude
+
+    /** ต่อคำศัพท์สำเร็จรูปของเกมท้ายอภิธานศัพท์ที่ผู้ใช้มีอยู่ */
+    private fun loadGamePreset(rawRes: Int) {
+        val preset = resources.openRawResource(rawRes).bufferedReader().use { it.readText() }.trim()
+        val current = glossaryInput.text.toString()
+        val header = preset.lineSequence().first()
+        if (current.contains(header)) {
+            toast(R.string.czn_already_loaded)
+            return
+        }
+        glossaryInput.setText(if (current.isBlank()) preset else current.trimEnd() + "\n\n" + preset)
+        toast(R.string.czn_loaded)
+    }
+
+    private fun updateApiKeyVisibility() {
+        apiKeySection.visibility = if (useClaude()) View.VISIBLE else View.GONE
+    }
 
     private fun start() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -103,9 +149,4 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toast(resId: Int) = Toast.makeText(this, resId, Toast.LENGTH_SHORT).show()
-
-    private companion object {
-        const val PREF_LANGUAGE = "language"
-        const val PREF_CONTINUOUS = "continuous"
-    }
 }
